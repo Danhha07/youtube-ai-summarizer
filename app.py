@@ -31,13 +31,11 @@ def extract_video_id(s: str) -> str:
 
 def fetch_transcript(video_id: str) -> str:
     try:
-      def fetch_transcript(video_id: str) -> str:
-    api = YouTubeTranscriptApi()
-    transcript = api.fetch(video_id)
-
-    text = " ".join([x.text for x in transcript])
-
-    return text
+        api = YouTubeTranscriptApi()
+        transcript = api.fetch(video_id)
+        return " ".join([x.text for x in transcript])
+    except Exception as e:
+        raise RuntimeError(f"Không lấy được transcript (video có thể tắt phụ đề). Chi tiết: {e}")
     except Exception:
         raise RuntimeError("Video này không có transcript.")
 
