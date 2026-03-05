@@ -31,8 +31,13 @@ def extract_video_id(s: str) -> str:
 
 def fetch_transcript(video_id: str) -> str:
     try:
-        items = YouTubeTranscriptApi.get_transcript(video_id, languages=["vi", "en"])
-        return " ".join([x["text"] for x in items])
+      def fetch_transcript(video_id: str) -> str:
+    api = YouTubeTranscriptApi()
+    transcript = api.fetch(video_id)
+
+    text = " ".join([x.text for x in transcript])
+
+    return text
     except Exception:
         raise RuntimeError("Video này không có transcript.")
 
