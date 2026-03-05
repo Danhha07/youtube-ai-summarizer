@@ -29,15 +29,23 @@ def extract_video_id(s: str) -> str:
     raise ValueError("Không tìm thấy video id.")
 
 
+from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound, VideoUnavailable
+
 def fetch_transcript(video_id: str) -> str:
     try:
-        api = YouTubeTranscriptApi()
-        transcript = api.fetch(video_id)
-        return " ".join([x.text for x in transcript])
+        # Lấy transcript ưu tiên vi -> en
+        items = YouTubeTranscriptApi.get_transcript(video_id, languages=["vi", "en"])
+        return " ".join([x["text"] for x in items]).strip()
+
+    except (TranscriptsDisabled, NoTranscriptFound):
+        raise RuntimeError("Video này không có transcript hoặc đã tắt phụ đề.")
+
+    except VideoUnavailable:
+        raise RuntimeError("Video không khả dụng / bị giới hạn khu vực / cần đăng nhập.")
+
     except Exception as e:
-        raise RuntimeError(f"Không lấy được transcript (video có thể tắt phụ đề). Chi tiết: {e}")
-    except Exception:
-        raise RuntimeError("Video này không có transcript.")
+        raise RuntimeError(f"Không lấy được transcript. Chi tiết: {e}") from e
 
 
 def summarize_with_ollama(transcript: str) -> str:
