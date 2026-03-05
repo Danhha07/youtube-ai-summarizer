@@ -1,4 +1,3 @@
 youtube-transcript-api
-openai
+requests
 python-dotenv
-
