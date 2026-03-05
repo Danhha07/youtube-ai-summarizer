@@ -1,5 +1,4 @@
 import re
-import json
 from datetime import datetime
 from pathlib import Path
 
@@ -9,78 +8,101 @@ from youtube_transcript_api import YouTubeTranscriptApi
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL = "llama3"
 
+
 def extract_video_id(s: str) -> str:
     s = s.strip()
+
     if re.fullmatch(r"[A-Za-z0-9_-]{11}", s):
         return s
+
     patterns = [
         r"v=([A-Za-z0-9_-]{11})",
         r"youtu\.be/([A-Za-z0-9_-]{11})",
         r"shorts/([A-Za-z0-9_-]{11})",
     ]
+
     for p in patterns:
         m = re.search(p, s)
         if m:
             return m.group(1)
-    raise ValueError("Không tìm thấy video id. Hãy dán link YouTube hoặc video id (11 ký tự).")
+
+    raise ValueError("Không tìm thấy video id.")
+
 
 def fetch_transcript(video_id: str) -> str:
-    # Pass video ID, not URL
-    items = YouTubeTranscriptApi.get_transcript(video_id, languages=["vi", "en"])
-    return " ".join([x["text"] for x in items])
+    try:
+        items = YouTubeTranscriptApi.get_transcript(video_id, languages=["vi", "en"])
+        return " ".join([x["text"] for x in items])
+    except Exception:
+        raise RuntimeError("Video này không có transcript.")
+
 
 def summarize_with_ollama(transcript: str) -> str:
-    transcript_cut = transcript[:18000]  # bản 1: cắt bớt để chạy ổn
+
+    transcript_cut = transcript[:18000]
+
     prompt = f"""
 Bạn là trợ lý tóm tắt video YouTube. Trả lời bằng tiếng Việt theo Markdown:
 
-## Tóm tắt nhanh (5-8 gạch đầu dòng)
+## Tóm tắt nhanh
 - ...
 
-## Các ý chính (checklist)
+## Các ý chính
 - [ ] ...
 
-## Bước thực hiện (nếu có)
-1. ...
-2. ...
-
-## Từ khóa (5-10 từ)
+## Từ khóa
 - ...
 
 Transcript:
 {transcript_cut}
 """
+
     payload = {
         "model": MODEL,
         "prompt": prompt,
         "stream": False
     }
+
     r = requests.post(OLLAMA_URL, json=payload, timeout=600)
     r.raise_for_status()
-    return r.json().get("response", "").strip()
+
+    return r.json()["response"].strip()
+
 
 def save_md(video_id: str, md: str) -> str:
+
     Path("outputs").mkdir(exist_ok=True)
+
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+
     path = Path("outputs") / f"{video_id}_{ts}.md"
+
     path.write_text(md, encoding="utf-8")
+
     return str(path)
 
+
 def main():
+
     print("=== YouTube AI Summarizer (FREE - Ollama) ===")
+
     s = input("Dán link YouTube hoặc video id: ").strip()
+
     video_id = extract_video_id(s)
+
     print("Video ID:", video_id)
 
     print("1) Lấy transcript...")
     transcript = fetch_transcript(video_id)
-    print("   OK, length:", len(transcript))
 
-    print("2) Tóm tắt bằng Ollama (local)...")
+    print("2) Tóm tắt bằng Ollama...")
     summary = summarize_with_ollama(transcript)
 
     out = save_md(video_id, summary)
+
     print("✅ Xong! File:", out)
+
 
 if __name__ == "__main__":
     main()
+
