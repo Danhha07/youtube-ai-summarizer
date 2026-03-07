@@ -1,26 +1,33 @@
 # YouTube AI Summarizer
 
-Free AI tool that summarizes YouTube videos using local AI (Ollama).
+Free AI tool that summarizes YouTube videos using **local AI (Ollama)**.
 
 ## Features
 
 - Fetch transcript from YouTube
-- Summarize video using local AI
+- Summarize video using local LLM (llama3)
+- Works fully offline with Ollama
 - Export summary to Markdown file
+
 ## Requirements
 
-- Python 3
+- Python 3.10+
 - Ollama
 - llama3 model
 
-## Setup
-
-Clone repository:
+Install Ollama model:
 
 ```bash
-git clone https://github.com/Danhha07/youtube-ai-summarizer.git
-cd youtube-ai-summarizer
+ollama pull llama3
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ollama serve
-ollama pull llama3
 python app.py
+Input:
+https://www.youtube.com/watch?v=xxxx
+
+Output:
+- Key ideas
+- Summary
+- Main takeaway
